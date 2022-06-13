@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Traits\HasEmailOrMobile;
 use App\Traits\Responsible;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 
 class LoginController extends Controller
@@ -16,7 +17,7 @@ class LoginController extends Controller
     {
         $validator = $this->validateAttributes();
         if ($validator->fails()) {
-            return $this->response('error', 'validation errors', $validator->errors(), 422);
+            return $this->response('error', 'validation errors', $validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         $validated = $validator->validated();
 
