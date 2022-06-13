@@ -4,50 +4,54 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Traits\HasEmailOrMobile;
+use App\Traits\Responsible;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 
 class LoginController extends Controller
 {
-    use HasEmailOrMobile;
+    use HasEmailOrMobile, Responsible;
 
     public function __invoke()
     {
-        $validated = $this->validateAttributes();
-        $checkEmailOrMobile = $this->checkEmailOrMobile($validated);
+        $validator = $this->validateAttributes();
+        if ($validator->fails()) {
+            return $this->response('error', 'validation errors', $validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        $validated = $validator->validated();
 
-        if ($checkEmailOrMobile == 'email')
+        if ($this->checkEmailOrMobile($validated) == 'email')
             return 'email';
         return 'mobile';
 //        return $this->generateOTP($validated);
     }
 
-    private function validateAttributes(): \Illuminate\Http\JsonResponse|array
+    private function validateAttributes(): \Illuminate\Contracts\Validation\Validator
     {
-        if (is_numeric(\request('username'))) {
-            $validator = Validator::make(\request()->all(), array(
+        if (is_numeric(request('username'))) {
+            $validator = Validator::make(request()->all(), array(
                 'username' => 'required|numeric|digits:10'
             ));
         } else {
-            $validator = Validator::make(\request()->all(), array(
+            $validator = Validator::make(request()->all(), array(
                 'username' => 'required|email'
             ));
         }
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'validation errors',
-                'data' => $validator->errors()
-            ], 422);
-        }
-
-        return $validator->validated();
+        return $validator;
     }
 
 
     private function generateOTP($attributes)
     {
+        $otp = rand(100000, 999999);
 
+        //save otp to database with user id
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent to your mobile',
+            'data' => $otp
+        ], 200);
     }
 }
